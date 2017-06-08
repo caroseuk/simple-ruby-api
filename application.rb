@@ -6,6 +6,7 @@ Bundler.require
 #If you prefer to use SQLite, then comment this line out and uncomment the line below.
 DataMapper.setup(:default, 'mysql://root:root@localhost/rubyapi')
 
+# Define Review Model
 class Review
  include DataMapper::Resource
 
@@ -21,10 +22,15 @@ end
 
 #Uncomment if you would like to use sqlite as storage
 #DataMapper.setup(:default, 'sqlite::memory')
-
 DataMapper.finalize
 DataMapper.auto_upgrade!
 
+# Authentication - before executing any routes, check the value of the 'key' paramter to make sure it is authorised to query the API.
+before do
+  error 401 unless params[:key] =~ /^123456789/
+end
+
+# Begin API route definitions
 get '/' do
 "Provide a verb to query the API"
 end
