@@ -1,10 +1,12 @@
 require 'sinatra'
 require 'sinatra/json'
 require 'bundler'
+require 'bcrypt'
+
 Bundler.require
 
 # If you prefer to use SQLite, then comment this line out and uncomment the line below.
-# DataMapper.setup(:default, 'sqlite::memory')
+# DataMapper.setup(:default, "sqlite://#{Dir.pwd}/db.sqlite")
 DataMapper.setup(:default, 'mysql://root:root@localhost/rubyapi')
 
 # Define Review Model
@@ -21,12 +23,24 @@ class Review
   validates_presence_of :text
 end
 
+class User
+  include DataMapper::Resource
+
+  property :id, Serial
+  property :username, String
+  property :password, BCryptHash
+
+  validates_presence_of :username
+  validates_presence_of :password
+end
+
 DataMapper.finalize
 DataMapper.auto_upgrade!
 
-# Authentication - before executing any routes, check the value of the 'key' paramter to make sure it is authorised to query the API.
+# Authentication - before executing any routes, check the username and password combination exist in the database.
 before do
-  error 401 unless params[:key] =~ /^123456789/
+  user = User.first(username: params[:username])
+  error 401, "Unauthorized" unless !user.nil? && user.password == params[:password]
 end
 
 # Begin API route definitions
